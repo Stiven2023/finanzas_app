@@ -1,0 +1,57 @@
+╔══════════════════════════════════════════════════════════════╗
+║       💰 FINANZAS PERSONALES 2026 — App de Escritorio       ║
+╚══════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ REQUISITOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • Python 3.8 o superior  →  https://python.org/downloads
+  • matplotlib (para las gráficas)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ INSTALACIÓN (solo la primera vez)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Abre una terminal (cmd o PowerShell en Windows) y ejecuta:
+
+      pip install matplotlib
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ CÓMO ABRIR LA APP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Opción A (doble clic):
+      → Haz doble clic en "app.py"
+        (si Python está instalado, se abre directo)
+
+  Opción B (terminal):
+      cd ruta/de/esta/carpeta
+      python app.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ QUÉ INCLUYE LA APP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📊 Dashboard      → KPIs y resumen de todo
+  💳 Deudas         → Ver, agregar, editar y marcar como pagadas
+  📅 Flujo Semanal  → Registra semana a semana desde el 20/02/2026
+  💰 Flujo Mensual  → Se consolida automáticamente del semanal
+  🚗 Metas          → Seguimiento de las metas con gráficas
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ DATOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Los datos se guardan automáticamente en "finanzas.db"
+  (en la misma carpeta que app.py).
+  ¡No borres ese archivo o perderás tu información!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ FLUJO DE USO RECOMENDADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Cada semana: ve a "📅 Flujo Semanal"
+     → clic en "✏️ Registrar" de la semana actual
+     → ingresa ingresos, gastos fijos, pagos de deudas y extras
+  2. El "💰 Flujo Mensual" se actualiza solo
+  3. Cuando pagues una deuda: ve a "💳 Deudas" → "✅ Pagada"
+  4. Revisa el dashboard para ver tu progreso
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ ¡ÉXITO CON TUS FINANZAS! 💪
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
