@@ -13,6 +13,16 @@ logger = logging.getLogger(__name__)
 class FinanceService:
     """Servicio para operaciones financieras"""
 
+    TRANSACTION_TYPE_MAP = {
+        'income': 'income',
+        'entrada': 'income',
+        'ingreso': 'income',
+        'expense': 'expense',
+        'gasto': 'expense',
+        'payment': 'payment',
+        'pago': 'payment',
+    }
+
     @staticmethod
     def _normalize_date_string(value: str) -> str:
         """Normaliza fechas a formato YYYY-MM-DD."""
@@ -21,6 +31,14 @@ class FinanceService:
         if isinstance(value, str) and len(value) >= 10:
             return value[:10]
         return str(value)
+
+    @staticmethod
+    def normalize_transaction_type(trans_type: str) -> str:
+        """Normaliza tipo de transacción a catálogo canónico."""
+        if not trans_type:
+            return 'expense'
+        key = str(trans_type).strip().lower()
+        return FinanceService.TRANSACTION_TYPE_MAP.get(key, key)
     
     @staticmethod
     def get_all_debts(user_id: int) -> List[Debt]:
@@ -158,8 +176,12 @@ class FinanceService:
             transaction_date: Fecha ISO format (default: hoy)
         """
         try:
+            trans_type = FinanceService.normalize_transaction_type(trans_type)
+
             if transaction_date is None:
                 transaction_date = date.today().isoformat()
+            else:
+                transaction_date = FinanceService._normalize_date_string(transaction_date)
             
             query = """
                 INSERT INTO transactions
@@ -186,15 +208,16 @@ class FinanceService:
             SELECT id, user_id, amount, currency, type, category,
                    description, date, week_id, goal_id, debt_id
             FROM transactions
-            WHERE user_id = ? AND date BETWEEN ? AND ?
+            WHERE user_id = ? AND substr(date, 1, 10) BETWEEN ? AND ?
             ORDER BY date DESC
         """
         results = db.execute_query(query, (user_id, start_date, end_date))
         transactions = []
         for row in results:
+            normalized_type = FinanceService.normalize_transaction_type(row[4])
             trans = Transaction(
                 id=row[0], user_id=row[1], amount=row[2],
-                currency=row[3], type=row[4], category=row[5],
+                currency=row[3], type=normalized_type, category=row[5],
                 description=row[6], date=row[7],
                 week_id=row[8], goal_id=row[9], debt_id=row[10]
             )

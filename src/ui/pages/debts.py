@@ -3,6 +3,7 @@ Página de Gestión de Deudas
 """
 import tkinter as tk
 from tkinter import messagebox, ttk
+from datetime import date
 from src.ui.components import frame, label, button, entry, card, separator, KPICard, DialogWindow, page_header
 from src.ui.theme import DEFAULT_COLORS as C, DEFAULT_FONTS as F
 from src.utils.formatters import format_money
@@ -143,7 +144,7 @@ class DebtsPage(tk.Frame):
     def _show_debt_dialog(self, debt=None):
         """Diálogo para crear/editar deuda"""
         win = DialogWindow(parent=self, title="Nueva Deuda" if not debt else f"Editar {debt.creditor}",
-                          width=500, height=550)
+                          width=560, height=700)
         
         label(win.header, "💳 " + ("Nueva Deuda" if not debt else "Editar Deuda"),
               font=F['lg'], bg=C['bg'], fg=C['text']).pack(anchor="w")
@@ -154,7 +155,7 @@ class DebtsPage(tk.Frame):
             ("Acreedor (nombre del deudor)", "creditor", debt.creditor if debt else ""),
             ("Saldo Actual ($)", "balance", str(debt.balance) if debt else ""),
             ("Cuota Mensual ($)", "monthly_payment", str(debt.monthly_payment) if debt else ""),
-            ("Fecha de Pago", "payment_date", debt.payment_date if debt else ""),
+            ("Fecha de Pago (próximo vencimiento, YYYY-MM-DD)", "payment_date", debt.payment_date if debt else ""),
             ("Categoría", "category", debt.category if debt else "personal"),
             ("Prioridad (1-5)", "priority", str(debt.priority) if debt else "3"),
             ("Estado", "status", debt.status if debt else "active"),
@@ -166,16 +167,99 @@ class DebtsPage(tk.Frame):
             f.pack(fill="x", pady=6)
             label(f, label_txt, font=F['sm_b'], bg=C['bg'],
                   fg=C['text2']).pack(anchor="w")
-            e = entry(f, width=45)
-            e.insert(0, value)
-            e.pack(fill="x", pady=(2, 0), ipady=6)
+
+            if field_name == "payment_date":
+                row = frame(f, bg=C['bg'])
+                row.pack(fill="x", pady=(2, 0))
+                e = entry(row, width=36)
+                e.insert(0, value)
+                e.pack(side="left", fill="x", expand=True, ipady=6)
+                button(
+                    row,
+                    "📅",
+                    lambda target=e: self._open_date_picker(target),
+                    bg=C['card2'],
+                    font=F['sm_b'],
+                    pad=(10, 6)
+                ).pack(side="left", padx=(8, 0))
+            else:
+                e = entry(f, width=45)
+                e.insert(0, value)
+                e.pack(fill="x", pady=(2, 0), ipady=6)
+
             self.entries[field_name] = e
+
+        inline_actions = frame(win.content, bg=C['bg'])
+        inline_actions.pack(fill="x", pady=(12, 4))
+        button(inline_actions, "💾 Guardar", lambda: self._save_debt(debt, win),
+               bg=C['teal'], pad=(16, 8)).pack(side="left", padx=(0, 10), fill="x", expand=True)
+        button(inline_actions, "Cancelar", win.destroy,
+               bg=C['card2'], pad=(16, 8)).pack(side="left", fill="x", expand=True)
         
         # Botones
         button(win.footer, "💾 Guardar", lambda: self._save_debt(debt, win),
                bg=C['teal'], pad=(16, 8)).pack(side="left", padx=(0, 10), fill="x", expand=True)
         button(win.footer, "Cancelar", win.destroy,
                bg=C['card2'], pad=(16, 8)).pack(side="left", fill="x", expand=True)
+
+         win.bind("<Control-s>", lambda e: self._save_debt(debt, win))
+         win.bind("<Control-S>", lambda e: self._save_debt(debt, win))
+         win.bind("<Command-s>", lambda e: self._save_debt(debt, win))
+         win.bind("<Command-S>", lambda e: self._save_debt(debt, win))
+         win.bind("<Escape>", lambda e: win.destroy())
+         first_entry = self.entries.get("creditor")
+         if first_entry:
+             first_entry.focus_set()
+
+    def _open_date_picker(self, target_entry):
+        """Abre selector simple de fecha y la coloca en el Entry destino."""
+        picker = tk.Toplevel(self)
+        picker.title("Seleccionar fecha")
+        picker.configure(bg=C['bg'])
+        picker.resizable(False, False)
+        picker.grab_set()
+
+        today = date.today()
+        try:
+            current_text = target_entry.get().strip()
+            if current_text:
+                y, m, d = [int(x) for x in current_text[:10].split("-")]
+                initial = date(y, m, d)
+            else:
+                initial = today
+        except Exception:
+            initial = today
+
+        cont = frame(picker, bg=C['bg'])
+        cont.pack(fill="both", expand=True, padx=16, pady=16)
+
+        label(cont, "Año", bg=C['bg'], fg=C['text2'], font=F['sm_b']).grid(row=0, column=0, sticky="w")
+        label(cont, "Mes", bg=C['bg'], fg=C['text2'], font=F['sm_b']).grid(row=0, column=1, sticky="w", padx=(8, 0))
+        label(cont, "Día", bg=C['bg'], fg=C['text2'], font=F['sm_b']).grid(row=0, column=2, sticky="w", padx=(8, 0))
+
+        year_var = tk.IntVar(value=initial.year)
+        month_var = tk.IntVar(value=initial.month)
+        day_var = tk.IntVar(value=initial.day)
+
+        tk.Spinbox(cont, from_=2000, to=2100, textvariable=year_var, width=8).grid(row=1, column=0, sticky="w", pady=(4, 10))
+        tk.Spinbox(cont, from_=1, to=12, textvariable=month_var, width=5).grid(row=1, column=1, sticky="w", padx=(8, 0), pady=(4, 10))
+        tk.Spinbox(cont, from_=1, to=31, textvariable=day_var, width=5).grid(row=1, column=2, sticky="w", padx=(8, 0), pady=(4, 10))
+
+        def apply_date():
+            try:
+                selected = date(year_var.get(), month_var.get(), day_var.get())
+                target_entry.delete(0, tk.END)
+                target_entry.insert(0, selected.isoformat())
+                picker.destroy()
+            except ValueError:
+                messagebox.showwarning("Fecha inválida", "La fecha seleccionada no es válida")
+
+        actions = frame(cont, bg=C['bg'])
+        actions.grid(row=2, column=0, columnspan=3, sticky="ew")
+        button(actions, "Aplicar", apply_date, bg=C['teal'], pad=(12, 6)).pack(side="left", padx=(0, 8))
+        button(actions, "Hoy", lambda: [target_entry.delete(0, tk.END), target_entry.insert(0, today.isoformat()), picker.destroy()],
+               bg=C['card2'], pad=(12, 6)).pack(side="left", padx=(0, 8))
+        button(actions, "Cancelar", picker.destroy, bg=C['card2'], pad=(12, 6)).pack(side="left")
     
     def _save_debt(self, debt, win):
         """Guarda una deuda"""

@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: flujo-postgres
+    environment:
+      POSTGRES_DB: flujo
+      POSTGRES_USER: flujo
+      POSTGRES_PASSWORD: flujo123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flujo -d flujo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  flujo-api:
+    build: .
+    container_name: flujo-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_ENGINE: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: flujo
+      DB_USER: flujo
+      DB_PASSWORD: flujo123
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

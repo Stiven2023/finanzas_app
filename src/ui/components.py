@@ -250,7 +250,8 @@ class DialogWindow(tk.Toplevel):
         self.geometry(f"{width}x{height}")
         self.configure(bg=C['bg'])
         self.grab_set()
-        self.resizable(False, False)
+        self.resizable(True, True)
+        self.minsize(420, 360)
         self.result = None
         
         # Centrar en pantalla
@@ -267,9 +268,39 @@ class DialogWindow(tk.Toplevel):
         sep = tk.Frame(self, bg=C['accent'], height=3)
         sep.pack(fill="x", pady=(0, 0))
         
-        # Contenido
-        self.content = frame(self, bg=C['bg'])
-        self.content.pack(fill="both", expand=True, padx=24, pady=16)
+        # Contenido con scroll
+        self.content_host = frame(self, bg=C['bg'])
+        self.content_host.pack(fill="both", expand=True, padx=24, pady=16)
+
+        self.content_canvas = tk.Canvas(
+            self.content_host,
+            bg=C['bg'],
+            highlightthickness=0,
+            bd=0,
+        )
+        self.content_scroll = ttk.Scrollbar(
+            self.content_host,
+            orient="vertical",
+            command=self.content_canvas.yview,
+        )
+        self.content_canvas.configure(yscrollcommand=self.content_scroll.set)
+
+        self.content = frame(self.content_canvas, bg=C['bg'])
+        self.content_window = self.content_canvas.create_window(
+            (0, 0), window=self.content, anchor="nw"
+        )
+
+        self.content_canvas.pack(side="left", fill="both", expand=True)
+        self.content_scroll.pack(side="right", fill="y")
+
+        self.content.bind(
+            "<Configure>",
+            lambda e: self.content_canvas.configure(scrollregion=self.content_canvas.bbox("all"))
+        )
+        self.content_canvas.bind(
+            "<Configure>",
+            lambda e: self.content_canvas.itemconfigure(self.content_window, width=e.width)
+        )
         
         # Separador antes del footer
         sep2 = tk.Frame(self, bg=C['border'], height=1)

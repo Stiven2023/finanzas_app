@@ -78,22 +78,6 @@ class AuthService:
         hashed_password, salt = AuthService.hash_password(password)
         
         try:
-            # Crear tabla de passwords si no existe
-            query = """CREATE TABLE IF NOT EXISTS user_passwords (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                password_salt TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_changed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            )"""
-            conn = db.get_connection()
-            c = conn.cursor()
-            c.execute(query)
-            conn.commit()
-            conn.close()
-            
             # Crear usuario
             query = """
                 INSERT INTO users (username, email, currency, language)

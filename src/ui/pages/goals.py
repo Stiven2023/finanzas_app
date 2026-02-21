@@ -3,6 +3,7 @@ Página de Gestión de Metas Financieras
 """
 import tkinter as tk
 from tkinter import messagebox, ttk
+from datetime import date
 from src.ui.components import frame, label, button, entry, card, separator, KPICard, ProgressBar, DialogWindow, page_header
 from src.ui.theme import DEFAULT_COLORS as C, DEFAULT_FONTS as F
 from src.utils.formatters import format_money
@@ -163,7 +164,7 @@ class GoalsPage(tk.Frame):
     def _show_goal_dialog(self, goal=None):
         """Diálogo para crear/editar meta"""
         win = DialogWindow(parent=self, title="Nueva Meta" if not goal else f"Editar {goal.name}",
-                          width=520, height=480)
+                          width=580, height=680)
         
         label(win.header, "🎯 " + ("Nueva Meta" if not goal else f"Editar Meta"),
               font=F['lg'], bg=C['bg'], fg=C['text']).pack(anchor="w")
@@ -174,7 +175,7 @@ class GoalsPage(tk.Frame):
             ("Nombre de la Meta", "name", goal.name if goal else ""),
             ("Descripción", "description", goal.description if goal else ""),
             ("Monto Objetivo ($)", "target_amount", str(goal.target_amount) if goal else ""),
-            ("Fecha Límite (YYYY-MM-DD)", "target_date", goal.target_date if goal else ""),
+            ("Fecha Límite (cuándo quieres cumplirla, YYYY-MM-DD)", "target_date", goal.target_date if goal else ""),
             ("Categoría", "category", goal.category if goal else "general"),
         ]
         
@@ -190,17 +191,98 @@ class GoalsPage(tk.Frame):
                 combo.set(self.GOAL_CATEGORIES.get(value, ('🎯', 'General'))[1])
                 combo.pack(fill="x", pady=(2, 0), ipady=6)
                 self.entries[field_name] = combo
+            elif field_name == "target_date":
+                row = frame(f, bg=C['bg'])
+                row.pack(fill="x", pady=(2, 0))
+                e = entry(row, width=36)
+                e.insert(0, value)
+                e.pack(side="left", fill="x", expand=True, ipady=6)
+                button(
+                    row,
+                    "📅",
+                    lambda target=e: self._open_date_picker(target),
+                    bg=C['card2'],
+                    font=F['sm_b'],
+                    pad=(10, 6)
+                ).pack(side="left", padx=(8, 0))
+                self.entries[field_name] = e
             else:
                 e = entry(f, width=45)
                 e.insert(0, value)
                 e.pack(fill="x", pady=(2, 0), ipady=6)
                 self.entries[field_name] = e
+
+        inline_actions = frame(win.content, bg=C['bg'])
+        inline_actions.pack(fill="x", pady=(12, 4))
+        button(inline_actions, "💾 Guardar", lambda: self._save_goal(goal, win),
+               bg=C['teal'], pad=(16, 8)).pack(side="left", padx=(0, 10), fill="x", expand=True)
+        button(inline_actions, "Cancelar", win.destroy,
+               bg=C['card2'], pad=(16, 8)).pack(side="left", fill="x", expand=True)
         
         # Botones
         button(win.footer, "💾 Guardar", lambda: self._save_goal(goal, win),
                bg=C['teal'], pad=(16, 8)).pack(side="left", padx=(0, 10), fill="x", expand=True)
         button(win.footer, "Cancelar", win.destroy,
                bg=C['card2'], pad=(16, 8)).pack(side="left", fill="x", expand=True)
+
+         win.bind("<Control-s>", lambda e: self._save_goal(goal, win))
+         win.bind("<Control-S>", lambda e: self._save_goal(goal, win))
+         win.bind("<Command-s>", lambda e: self._save_goal(goal, win))
+         win.bind("<Command-S>", lambda e: self._save_goal(goal, win))
+         win.bind("<Escape>", lambda e: win.destroy())
+         first_entry = self.entries.get("name")
+         if first_entry:
+             first_entry.focus_set()
+
+    def _open_date_picker(self, target_entry):
+        """Abre selector simple de fecha y la coloca en el Entry destino."""
+        picker = tk.Toplevel(self)
+        picker.title("Seleccionar fecha")
+        picker.configure(bg=C['bg'])
+        picker.resizable(False, False)
+        picker.grab_set()
+
+        today = date.today()
+        try:
+            current_text = target_entry.get().strip()
+            if current_text:
+                y, m, d = [int(x) for x in current_text[:10].split("-")]
+                initial = date(y, m, d)
+            else:
+                initial = today
+        except Exception:
+            initial = today
+
+        cont = frame(picker, bg=C['bg'])
+        cont.pack(fill="both", expand=True, padx=16, pady=16)
+
+        label(cont, "Año", bg=C['bg'], fg=C['text2'], font=F['sm_b']).grid(row=0, column=0, sticky="w")
+        label(cont, "Mes", bg=C['bg'], fg=C['text2'], font=F['sm_b']).grid(row=0, column=1, sticky="w", padx=(8, 0))
+        label(cont, "Día", bg=C['bg'], fg=C['text2'], font=F['sm_b']).grid(row=0, column=2, sticky="w", padx=(8, 0))
+
+        year_var = tk.IntVar(value=initial.year)
+        month_var = tk.IntVar(value=initial.month)
+        day_var = tk.IntVar(value=initial.day)
+
+        tk.Spinbox(cont, from_=2000, to=2100, textvariable=year_var, width=8).grid(row=1, column=0, sticky="w", pady=(4, 10))
+        tk.Spinbox(cont, from_=1, to=12, textvariable=month_var, width=5).grid(row=1, column=1, sticky="w", padx=(8, 0), pady=(4, 10))
+        tk.Spinbox(cont, from_=1, to=31, textvariable=day_var, width=5).grid(row=1, column=2, sticky="w", padx=(8, 0), pady=(4, 10))
+
+        def apply_date():
+            try:
+                selected = date(year_var.get(), month_var.get(), day_var.get())
+                target_entry.delete(0, tk.END)
+                target_entry.insert(0, selected.isoformat())
+                picker.destroy()
+            except ValueError:
+                messagebox.showwarning("Fecha inválida", "La fecha seleccionada no es válida")
+
+        actions = frame(cont, bg=C['bg'])
+        actions.grid(row=2, column=0, columnspan=3, sticky="ew")
+        button(actions, "Aplicar", apply_date, bg=C['teal'], pad=(12, 6)).pack(side="left", padx=(0, 8))
+        button(actions, "Hoy", lambda: [target_entry.delete(0, tk.END), target_entry.insert(0, today.isoformat()), picker.destroy()],
+               bg=C['card2'], pad=(12, 6)).pack(side="left", padx=(0, 8))
+        button(actions, "Cancelar", picker.destroy, bg=C['card2'], pad=(12, 6)).pack(side="left")
     
     def _save_goal(self, goal, win):
         """Guarda una meta"""

@@ -19,17 +19,19 @@ logger = logging.getLogger(__name__)
 
 # Agregar src al path
 sys.path.insert(0, str(Path(__file__).parent))
-
-from src.ui.main_window import MainWindow
-from src.database.db import db
+from src.database.runtime_config import configure_database_engine
 
 def main():
     """Punto de entrada de la aplicación"""
     try:
         logger.info("Iniciando Flujo - Gestor Financiero...")
+
+        engine = configure_database_engine()
+        logger.info("Motor de BD activo: %s", engine)
+
+        from src.database.db import db
+        from src.ui.main_window import MainWindow
         
-        # Inicializar base de datos
-        db.init_db()
         logger.info("Base de datos verificada y lista")
         
         # Crear ventana principal

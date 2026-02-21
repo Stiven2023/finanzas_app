@@ -181,6 +181,34 @@ def apply_ttk_theme(root: tk.Misc, colors=None, fonts=None):
         background=[("active", c['accent2'])],
     )
 
+    style.configure(
+        "Treeview",
+        background=c['card'],
+        fieldbackground=c['card'],
+        foreground=c['text'],
+        bordercolor=c['border'],
+        rowheight=30,
+        font=f['base'],
+    )
+    style.configure(
+        "Treeview.Heading",
+        background=c['card2'],
+        foreground=c['text'],
+        relief="flat",
+        font=f['sm_b'],
+        padding=6,
+    )
+    style.map(
+        "Treeview",
+        background=[("selected", c['accent2'])],
+        foreground=[("selected", c['white'])],
+    )
+    style.map(
+        "Treeview.Heading",
+        background=[("active", c['accent'])],
+        foreground=[("active", c['white'])],
+    )
+
     root.option_add("*TCombobox*Listbox*Background", c['card'])
     root.option_add("*TCombobox*Listbox*Foreground", c['text'])
     root.option_add("*TCombobox*Listbox*selectBackground", c['accent2'])
